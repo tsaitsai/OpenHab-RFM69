@@ -1,0 +1,87 @@
+1)  Under /configurations/openhab.cfg
+
+
+######################## Mail Action configuration ############################$
+
+mail:hostname=smtp.gmail.com
+
+mail:port=587
+
+mail:username=????? without the @gmail
+mail:password=?????
+
+mail:from=??? yourname@gmail.com
+
+mail:tls=true
+
+
+
+
+
+################################### MQTT Transport #########################################
+#
+
+mqtt:mymosquitto.url=tcp://localhost:1883
+
+mqtt:mymosquitto.qos=0
+
+mqtt:mymosquitto.retain=true
+
+mqtt:mymosquitto.async=true
+
+
+-----------------------------------------------------------------------------------------
+
+2)  Under /configurations/items/demo.items
+
+
+Switch itm_mailbox "Switch" (ALL)
+Number itm_mailboxmqtt "Mailbox RSSI [%.1f]" (ALL) {mqtt="<[mymosquitto:4124:state:default]"}
+Number itm_mailboxcnt "Mail Count [%.1f]" (ALL) {mqtt="<[mymosquitto:4122:state:default]"}
+DateTime itm_mailbox_time "Mailbox Last Updated [%1$tA, %1$tm/%1$td, %1$tI:%1$tM %1$tp]"
+Number itm_mailboxbat "Mailbox Battery [%.1f Volt]" (ALL) {mqtt="<[mymosquitto:4123:state:default]"}
+
+
+
+
+-----------------------------------------------------------------------------------
+3)  Under /configurations/sitemap/demo.sitemap
+
+        Frame label="Mailbox"
+        {
+                Switch item=itm_mailbox label="Mailbox" mappings=[OFF="Off"]
+                Text item=itm_mailbox_time
+                Text item=itm_mailboxmqtt
+                Text item=itm_mailboxcnt
+                Text item=itm_mailboxbat
+        }
+
+
+--------------------------------------------------------------------------------
+4)  Under /configurations/rules/demo.rules
+
+rule "send email and talk"
+        when
+                Item itm_mailbox changed from OFF to ON
+        then
+                playSound("aolmail.mp3")
+                sendMail("myemailaddress@gmail.com", "subject line here" , "email body text")
+
+
+end
+
+
+rule "update mailbox"
+        when
+                Item itm_mailboxmqtt received update
+        then
+                sendCommand(itm_mailbox, ON)
+                postUpdate(itm_mailbox_time, new DateTimeType())
+end
+
+
+
+
+--------------------------------------------------------------------------------------
+END OF CONFIGURATIONS
+
