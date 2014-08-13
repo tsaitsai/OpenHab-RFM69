@@ -29,10 +29,10 @@ Modifications Needed:
 
 typedef struct {		
   int           nodeID; 
-  int			deviceID;
+  int			      deviceID;
   unsigned long var1_usl;
   float         var2_float;
-  float			var3_float;
+  float			    var3_float;
 } Payload;
 Payload theData;
 
