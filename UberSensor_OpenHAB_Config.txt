@@ -1,0 +1,153 @@
+//OpenHAB Configuration for UberSensor.ino
+
+
+/* Item Definition Uber sensor Alarms and Notifications Control*/
+Switch itm_NAA_auto "Auto Schedule Alarms/Notifications"
+
+Switch itm_uber1_gas_alm_enb "Gas / Smoke Notifer"
+Switch itm_uber1_flame_alm_enb "Flame Notifier"
+Switch itm_uber1_bark_alm_enb "Bark Notifier"
+Switch itm_uber1_pir_alm_enb "Presence Notifier"
+
+Switch itm_uber1_gas_alm_sta "Gas / Smoke Alarm Status"
+Switch itm_uber1_flame_alm_sta "Flame Alarm Status"
+Switch itm_uber1_bark_alm_sta "Bark Alarm Status"
+Switch itm_uber1_pir_alm_sta "PIR Presence Status"
+
+Switch itm_uber1_light_sta "Living Room Light"
+
+DateTime itm_uber1_gas_time "Gas Alarm Time [%1$tA, %1$tm/%1$td, %1$tI:%1$tM %1$tp]"
+DateTime itm_uber1_flame_time "Flame Alarm Time [%1$tA, %1$tm/%1$td, %1$tI:%1$tM %1$tp]"
+DateTime itm_uber1_bark_time "Bark Alarm Time [%1$tA, %1$tm/%1$td, %1$tI:%1$tM %1$tp]"
+DateTime itm_uber1_pir_time "PIR Presence Alarm Time [%1$tA, %1$tm/%1$td, %1$tI:%1$tM %1$tp]"
+
+Number itm_uber1_gas_mqtt "Gas [%.1f]" (ALL) {mqtt="<[mymosquitto:1222:state:default]"}
+Number itm_uber1_flame_mqtt "Flame [%.1f]" (ALL) {mqtt="<[mymosquitto:1232:state:default]"}
+Number itm_uber1_pir_mqtt "PIR [%.1f]" (ALL) {mqtt="<[mymosquitto:1242:state:default]"}
+Number itm_uber1_bark_mqtt "Bark [%.1f]" (ALL) {mqtt="<[mymosquitto:1252:state:default]"}
+Number itm_uber1_temp_mqtt "Uber Temperature [%.1f]" (ALL) {mqtt="<[mymosquitto:1262:state:default]"}
+Number itm_uber1_hum_mqtt "Uber Humidity [%.1f]" (ALL) {mqtt="<[mymosquitto:1263:state:default]"}
+Number itm_uber1_light_mqtt "Light Sensor [%.1f]" (ALL) {mqtt="<[mymosquitto:1272:state:default]"}
+
+
+---------------------------------------------------------------------------------
+
+
+/* Uber sensor rules */
+/* -------------  Uber Sensor -------------------- */
+rule "Uber Lighs"
+        when
+                Item itm_uber1_light_mqtt received update
+        then
+                if(itm_uber1_light_mqtt.state < 350)
+                {
+                        sendCommand(itm_uber1_light_sta, OFF)
+                }
+                else
+                {
+                         sendCommand(itm_uber1_light_sta, ON)
+                }
+end
+
+
+/*-----  uber - gas/smoke ---------- */
+rule "Uber gas smoke threshold"
+        when
+                Item itm_uber1_gas_mqtt received update
+        then
+                if((itm_uber1_gas_mqtt.state > 220) && (itm_uber1_gas_alm_enb.state == ON))
+                {
+                        sendCommand(itm_uber1_gas_alm_sta, ON)
+                }
+end
+
+rule "Uber gas smoke response"
+        when
+                Item itm_uber1_gas_alm_sta changed from OFF to ON
+        then
+		sendMail("ArduinoHomeAutomationOpenHAB@gmail.com", "gas / smoke" , "gas or smoke detected")
+                //playSound("ding.mp3")
+                postUpdate(itm_uber1_gas_time, new DateTimeType())
+end
+
+/* --------- uber flame ---------- */
+rule "Uber flame threshold"
+        when
+                Item itm_uber1_flame_mqtt received update
+        then
+                if((itm_uber1_flame_mqtt.state < 900) && (itm_uber1_flame_alm_enb.state == ON))
+                {
+                        sendCommand(itm_uber1_flame_alm_sta, ON)
+                }
+end
+
+rule "Uber flame response"
+        when
+                Item itm_uber1_flame_alm_sta changed from OFF to ON
+        then
+                sendMail("ArduinoHomeAutomationOpenHAB@gmail.com", "fire detected" , "fire detected")
+                //playSound("ding.mp3")
+                postUpdate(itm_uber1_flame_time, new DateTimeType())
+end
+
+
+/* --------- uber bark ---------- */
+rule "Uber bark threshold"
+        when
+                Item itm_uber1_bark_mqtt received update
+        then
+                if(itm_uber1_bark_alm_enb.state == ON)
+                {
+                        sendCommand(itm_uber1_bark_alm_sta, ON)
+                }
+end
+
+rule "Uber bark response"
+        when
+                Item itm_uber1_bark_alm_sta changed from OFF to ON
+        then
+                sendMail("ArduinoHomeAutomationOpenHAB@gmail.com", "bark detected" , "dog barked!!!")
+                //playSound("ding.mp3")
+                postUpdate(itm_uber1_bark_time, new DateTimeType())
+end
+
+/* --------- uber pir ---------- */
+rule "Uber pir threshold"
+        when
+                Item itm_uber1_pir_mqtt received update
+        then
+                if(itm_uber1_pir_alm_enb.state == ON)
+                {
+                        sendCommand(itm_uber1_pir_alm_sta, ON)
+                }
+end
+
+rule "Uber pir response"
+        when
+                Item itm_uber1_pir_alm_sta changed from OFF to ON
+        then
+                sendMail("ArduinoHomeAutomationOpenHAB@gmail.com", "pir detected" , "dog pired!!!")
+                //playSound("ding.mp3")
+                postUpdate(itm_uber1_pir_time, new DateTimeType())
+end
+
+
+-----------------------------------------------------------------
+    Frame label="Uber Sensor" {
+            Text item=itm_uber1_temp_mqtt
+            Text item=itm_uber1_hum_mqtt
+            Switch item=itm_uber1_light_sta
+            Switch item=itm_NAA_auto
+    }
+    Frame label="Uber Sensor Alarm Status" {
+            Switch item=itm_uber1_gas_alm_sta mappings=[OFF="Off"]
+            Switch item=itm_uber1_flame_alm_sta mappings=[OFF="Off"]
+            Switch item=itm_uber1_bark_alm_sta mappings=[OFF="Off"]
+            Switch item=itm_uber1_pir_alm_sta mappings=[OFF="Off"]
+    }
+    Frame label="Uber Sensor Alarm Enable" {
+            Switch item=itm_uber1_gas_alm_enb
+            Switch item=itm_uber1_flame_alm_enb
+            Switch item=itm_uber1_bark_alm_enb
+            Switch item=itm_uber1_pir_alm_enb
+    }
