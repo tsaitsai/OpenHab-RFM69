@@ -203,6 +203,7 @@ void loop()
   }//end if sendMQTT
   
   
+  //client.loop needs to run every iteration.  Previous version did not.  Big opps.
   client.loop();
   
   
