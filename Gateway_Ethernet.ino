@@ -202,12 +202,9 @@ void loop()
       Serial.println("finished MQTT send");
   }//end if sendMQTT
   
-  //client.loop();
-  if ((millis() - keepalivetime)>10000)
-  {
-    client.loop();
-    keepalivetime = millis();
-  }
+  
+  client.loop();
+  
   
   if ((millis() - MQTT_reconnect) > 60000)
   {
