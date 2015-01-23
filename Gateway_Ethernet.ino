@@ -21,9 +21,9 @@ const byte MY_ADDRESS = 42;    //I2C comms w/ other Arduino
 
 //Ethernet
 byte mac[]    = {  0x90, 0xA2, 0xDA, 0x0D, 0x11, 0x11 };
-byte server[] = { 192, 168, 1, 51 };
+byte server[] = { 192, 168, 1, 51 };  //your MQTT broker IP address
 
-IPAddress ip(192,168,2,61);
+//IPAddress ip(192,168,2,61);
 EthernetClient ethClient;
 PubSubClient client(server, 1883, callback, ethClient);
 unsigned long keepalivetime=0;
@@ -92,6 +92,7 @@ volatile boolean haveData = false;
 void loop() 
 {
   
+  //if new data on I2C from RFM gateway received, flag for MQTT publish
   if (haveData)
   {
     Serial.print ("Received Device ID = ");
@@ -125,6 +126,7 @@ void loop()
 
       Serial.println("starting MQTT send");
       
+      //check to make sure connected to MQTT before trying to publish data
       conn_ok = client.connected();
       if (conn_ok==1)
       {
@@ -206,7 +208,7 @@ void loop()
   //client.loop needs to run every iteration.  Previous version did not.  Big opps.
   client.loop();
   
-  
+  //regularly check MQTT connection (ever x seconds)
   if ((millis() - MQTT_reconnect) > 60000)
   {
     conn_ok = client.connected();
